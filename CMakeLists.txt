@@ -31,6 +31,8 @@ set(hdrtest_SRCS
     main.cpp
     window.cpp
     ExrReader.cpp
+    HdrImageF16.cpp
+    kis_debug.cpp
 )
 
 add_executable(hdrtest ${hdrtest_SRCS})

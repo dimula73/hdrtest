@@ -23,6 +23,8 @@
 #include <QImage>
 #include <QDataStream>
 #include <QDebug>
+#include "HdrImageF16.h"
+#include "kis_debug.h"
 
 
 ExrReader::ExrReader(QIODevice *io)
@@ -144,7 +146,7 @@ QRgb RgbaToQrgba(struct Imf::Rgba imagePixel)
                  (unsigned char)(Imath::clamp(a * 84.66f, 0.f, 255.f)));
 }
 
-bool ExrReader::read(QImage *outImage)
+bool ExrReader::read(QImage *outImage, HdrImageF16 *hdrImage)
 {
     try {
         int width, height;
@@ -153,13 +155,15 @@ bool ExrReader::read(QImage *outImage)
         Imf::RgbaInputFile file(istr);
         Imath::Box2i dw = file.dataWindow();
 
+        ENTER_FUNCTION() << ppVar(dw.max.x) << ppVar(dw.max.y) << ppVar(dw.min.x) << ppVar(dw.min.y);
+
         width  = dw.max.x - dw.min.x + 1;
         height = dw.max.y - dw.min.y + 1;
 
         Imf::Array2D<Imf::Rgba> pixels;
         pixels.resizeErase(height, width);
 
-        file.setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * width, 1, width);
+        file.setFrameBuffer(&pixels[0][0], 1, size_t(width));
         file.readPixels(dw.min.y, dw.max.y);
 
         QImage image(width, height, QImage::Format_RGB32);
@@ -175,7 +179,7 @@ bool ExrReader::read(QImage *outImage)
         for (int y = 0; y < height; y++) {
 
             for (int x = 0; x < width; x++) {
-                struct Imf::Rgba pxl = pixels[x][y];
+                struct Imf::Rgba pxl = pixels[y][x];
 
                 // copy pixels(x,y) into image(x,y)
                 image.setPixel(x, y, RgbaToQrgba(pxl));
@@ -191,6 +195,9 @@ bool ExrReader::read(QImage *outImage)
         }
 
         *outImage = image;
+
+        hdrImage->setData(pixels);
+
 
         return true;
     } catch (const std::exception &exc) {

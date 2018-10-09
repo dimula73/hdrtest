@@ -8,45 +8,9 @@
 #include <QVector2D>
 #include <QVector3D>
 #include <QVector>
-
-QString __methodName(const char *_prettyFunction)
-{
-    std::string prettyFunction(_prettyFunction);
-
-    size_t colons = prettyFunction.find("::");
-    size_t begin = prettyFunction.substr(0,colons).rfind(" ") + 1;
-    size_t end = prettyFunction.rfind("(") - begin;
-
-    return QString(std::string(prettyFunction.substr(begin,end) + "()").c_str());
-}
-
-/**
- * Please pretty print my variable
- *
- * Use this macro to display in the output stream the name of a variable followed by its value.
- */
-#define ppVar( var ) #var << "=" << (var)
-
-#ifdef __GNUC__
-QString __methodName(const char *prettyFunction);
-#define __METHOD_NAME__ __methodName(__PRETTY_FUNCTION__)
-#else
-#define __METHOD_NAME__ "<unknown>:<unknown>"
-#endif
-
-#define PREPEND_METHOD(msg) QString("%1: %2").arg(__METHOD_NAME__).arg(msg)
-
-#ifdef __GNUC__
-#define ENTER_FUNCTION() qDebug() << "Entering" << __METHOD_NAME__
-#define LEAVE_FUNCTION() qDebug() << "Leaving " << __METHOD_NAME__
-#else
-#define ENTER_FUNCTION() qDebug() << "Entering" << "<unknown>"
-#define LEAVE_FUNCTION() qDebug() << "Leaving " << "<unknown>"
-#endif
-
-
 #include <QRectF>
-#include <QVector3D>
+
+#include "kis_debug.h"
 
 inline void rectToVertices(QVector3D* vertices, const QRectF &rc)
 {
@@ -266,20 +230,18 @@ void GLWidget::loadImage(const QString &fname)
     m_tiles.clear();
 
     ExrReader reader(&f);
-    if (reader.read(&m_image)) {
+    if (reader.read(&m_image, &m_hdrImage)) {
 
         m_image.save("bla.png");
 
         QOpenGLTexture *texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
-        qDebug() << "start format";
-        texture->setFormat(QOpenGLTexture::RGBA8_UNorm);
-        qDebug() << "end format";
-        qDebug() << ppVar(m_image.size());
+        qDebug() << "start format" << ppVar(m_hdrImage.size());
+        texture->setFormat(QOpenGLTexture::RGBA16F);
         texture->setSize(m_image.width(), m_image.height());
-        texture->allocateStorage(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8);
+        texture->allocateStorage(QOpenGLTexture::RGBA, QOpenGLTexture::Float16);
         texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         texture->setMagnificationFilter(QOpenGLTexture::Linear);
-        texture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, m_image.bits());
+        texture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float16, &m_hdrImage.data()[0][0]);
         texture->generateMipMaps();
         m_tiles << texture;
 

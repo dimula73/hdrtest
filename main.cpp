@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL, true);
 
 
-    QString fname = "/home/appimage/persistent/hdrtest/Desk.exr";
+    QString fname = "./Desk.exr";
     QStringList arguments = app.arguments();
     if (arguments.size() > 1) {
         fname = app.arguments().at(1);

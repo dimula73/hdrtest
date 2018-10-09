@@ -8,6 +8,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QTransform>
+#include "HdrImageF16.h"
 
 class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -47,6 +48,7 @@ private:
     QOpenGLBuffer m_textureVerticesBuffer;
     QOpenGLVertexArrayObject m_vao;
     QImage m_image;
+    HdrImageF16 m_hdrImage;
 };
 
 
