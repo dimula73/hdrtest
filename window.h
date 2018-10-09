@@ -1,20 +1,26 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "helper.h"
-
 #include <QMainWindow>
 
 class QAction;
+
+class GLWidget;
 
 class Window : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Window(QIODevice &io);
+    Window(const QString &fname);
+
+public Q_SLOTS:
+
+    void fileOpen();
 
 private:
+    GLWidget *m_glWidget {0};
+    QAction *m_openAction {0};
     QAction *m_quitAction {0};
 };
 

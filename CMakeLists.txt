@@ -18,7 +18,7 @@ find_package(Qt5 ${MIN_QT_VERSION}
 # Include the qtmain lib if we are on the windows platform
 
 IF(WIN32)
-    SET(LIBS ${LIBS} ${Qt5Core_QTMAIN_LIBRARIES} d3d11 d3dcompiler)
+    SET(LIBS ${LIBS} ${Qt5Core_QTMAIN_LIBRARIES})
 ENDIF(WIN32)
 
 FIND_PACKAGE(OpenEXR REQUIRED)
@@ -26,16 +26,16 @@ INCLUDE_DIRECTORIES(${OPENEXR_INCLUDE_DIR} "${OPENEXR_INCLUDE_DIR}/OpenEXR")
 
 SET(LIBS ${LIBS} ${OPENEXR_LIBRARIES})
 
-set(direct3dtest_SRCS 
+set(hdrtest_SRCS 
     glwidget.cpp 
     main.cpp
     window.cpp
     ExrReader.cpp
 )
 
-add_executable(direct3dtest WIN32 ${direct3dtest_SRCS})
+add_executable(hdrtest ${hdrtest_SRCS})
 target_link_libraries(
-    direct3dtest
+    hdrtest
         PRIVATE 
     ${LIBS}
     Qt5::Core

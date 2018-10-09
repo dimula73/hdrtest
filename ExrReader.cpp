@@ -91,10 +91,10 @@ QRgb RgbaToQrgba(struct Imf::Rgba imagePixel)
     //     2^(exposure + 2.47393).
     // Response: We work with exposure of 0.0.
     // (2^2.47393) is 5.55555
-    r = imagePixel.r * 5.55555;
-    g = imagePixel.g * 5.55555;
-    b = imagePixel.b * 5.55555;
-    a = imagePixel.a * 5.55555;
+    r = imagePixel.r * 5.55555f;
+    g = imagePixel.g * 5.55555f;
+    b = imagePixel.b * 5.55555f;
+    a = imagePixel.a * 5.55555f;
 
     //  3) Values, which are now 1.0, are called "middle gray".
     //     If defog and exposure are both set to 0.0, then
@@ -156,9 +156,10 @@ bool ExrReader::read(QImage *outImage)
         width  = dw.max.x - dw.min.x + 1;
         height = dw.max.y - dw.min.y + 1;
 
-        m_pixels.resizeErase(height, width);
+        Imf::Array2D<Imf::Rgba> pixels;
+        pixels.resizeErase(height, width);
 
-        file.setFrameBuffer(&m_pixels[0][0] - dw.min.x - dw.min.y * width, 1, width);
+        file.setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * width, 1, width);
         file.readPixels(dw.min.y, dw.max.y);
 
         QImage image(width, height, QImage::Format_RGB32);
@@ -166,11 +167,26 @@ bool ExrReader::read(QImage *outImage)
             return false;
         }
 
+        m_pixels = new half[width * height * 4];
+        memset(m_pixels, 0, width * height * 4 * sizeof(half));
+        int idx = 0;
+
         // somehow copy pixels into image
         for (int y = 0; y < height; y++) {
+
             for (int x = 0; x < width; x++) {
+                struct Imf::Rgba pxl = pixels[x][y];
+
                 // copy pixels(x,y) into image(x,y)
-                image.setPixel(x, y, RgbaToQrgba(m_pixels[y][x]));
+                image.setPixel(x, y, RgbaToQrgba(pxl));
+
+                // And in our raw half array
+                m_pixels[idx] = pxl.r;
+                m_pixels[idx + 1] = pxl.g;
+                m_pixels[idx + 2] = pxl.b;
+                m_pixels[idx + 3] = pxl.a;
+
+                idx += 4;
             }
         }
 
