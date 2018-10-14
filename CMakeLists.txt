@@ -35,6 +35,12 @@ set(hdrtest_SRCS
     kis_debug.cpp
 )
 
+set(hdr_QRCS
+    ${CMAKE_SOURCE_DIR}/shaders.qrc
+     CACHE INTERNAL "hdr_QRCS"
+)
+qt5_add_resources(hdrtest_SRCS ${hdr_QRCS})
+
 add_executable(hdrtest ${hdrtest_SRCS})
 target_link_libraries(
     hdrtest

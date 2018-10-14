@@ -8,6 +8,9 @@
 
 int main(int argc, char *argv[])
 {
+    //qputenv("QT_OPENGL", "angle");
+
+#if 0
     QSurfaceFormat fmt;
     fmt.setRenderableType(QSurfaceFormat::OpenGL);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
@@ -18,12 +21,13 @@ int main(int argc, char *argv[])
     fmt.setBlueBufferSize(16);
     fmt.setAlphaBufferSize(16);
     QSurfaceFormat::setDefaultFormat(fmt);
-
-
+#endif
 
     QApplication app(argc, argv);
+
     // OpenGLES isn't possible, and on Windows with Intel we have to use ES, because Angle
-    QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL, true);
+    //QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL, true);
+    QCoreApplication::setAttribute(Qt::AA_UseOpenGLES, true);
 
 
     QString fname = "./Desk.exr";

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>simple_texture.frag</file>
+        <file>simple_texture.vert</file>
+    </qresource>
+</RCC>

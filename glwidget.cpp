@@ -34,7 +34,7 @@ inline void rectToTexCoords(QVector2D* texCoords, const QRectF &rc)
 
 
 const QString texture_frag =
-        "#version 330 core\n"
+        "#version 300\n"
         "// vertices datas\n"
         "in vec4 textureCoordinates;\n"
         "// uniforms\n"
@@ -52,7 +52,7 @@ const QString texture_frag =
 
 
 const QString texture_vert =
-        "#version 330 core\n"
+        "#version 300\n"
         "uniform mat4 viewProjectionMatrix;\n"
         "uniform mat4 textureMatrix;\n"
         "in vec3 vertexPosition;\n"
@@ -71,7 +71,8 @@ GLWidget::GLWidget(const QString &fname, QWidget *parent)
 {
     setAttribute(Qt::WA_NoSystemBackground, true);
     setAttribute(Qt::WA_DontCreateNativeAncestors, true);
-    setTextureFormat(GL_RGBA16F);
+    //setTextureFormat(GL_RGBA16F);
+    //setTextureFormat(GL_RGBA8); // doesn't work for OpenGL ES!!!
     setAutoFillBackground(false);
 }
 
@@ -96,17 +97,52 @@ void GLWidget::initializeGL()
     printVersionInformation();
     glClearColor(0.7f, 0.5f, 0.5f, 1.0f);
 
+    QOpenGLContext *context = this->context();
+    QOpenGLFunctions *funcs = context->functions();
+    QString rendererString = QString(reinterpret_cast<const char *>(funcs->glGetString(GL_RENDERER)));
+    QString driverVersionString = QString(reinterpret_cast<const char *>(funcs->glGetString(GL_VERSION)));
+
+    qDebug() << ppVar(rendererString);
+    qDebug() << ppVar(driverVersionString);
+
     m_vao.create();
     m_vao.bind();
 
 
+    QFile vertexShaderFile(QString(":/") + "simple_texture.vert");
+    vertexShaderFile.open(QIODevice::ReadOnly);
+    QString vertSource = vertexShaderFile.readAll();
+
+    QFile fragShaderFile(QString(":/") + "simple_texture.frag");
+    fragShaderFile.open(QIODevice::ReadOnly);
+    QString fragSource = fragShaderFile.readAll();
+
+    ENTER_FUNCTION() << ppVar(context->isOpenGLES());
+
+    if (context->isOpenGLES()) {
+        const char *versionHelper = "#define USE_OPENGLES\n";
+        vertSource.prepend(versionHelper);
+        fragSource.prepend(versionHelper);
+
+        const char *versionDefinition = "#version 100\n";
+        vertSource.prepend(versionDefinition);
+        fragSource.prepend(versionDefinition);
+    } else {
+        const char *versionDefinition = "#version 330 core\n";
+        vertSource.prepend(versionDefinition);
+        fragSource.prepend(versionDefinition);
+    }
+
+
+
+
     m_program = new QOpenGLShaderProgram();
-    if (!m_program->addShaderFromSourceCode(QOpenGLShader::Vertex, texture_vert.toLatin1())) {
+    if (!m_program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertSource)) {
         qDebug() << "Could not add vertex code";
         return;
     }
 
-    if (!m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, texture_frag.toLatin1())) {
+    if (!m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragSource)) {
         qDebug() << "Could not add fragment code";
         return;
     }
@@ -234,14 +270,32 @@ void GLWidget::loadImage(const QString &fname)
 
         m_image.save("bla.png");
 
+#if 0
+        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA8_UNorm;
+        const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::BGRA;
+        const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
+#endif
+
+        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA8_UNorm;
+        const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
+        const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
+
+
+#if 0
+        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA16F;
+        const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
+        const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::Float16;
+#endif
+
+
         QOpenGLTexture *texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
         qDebug() << "start format" << ppVar(m_hdrImage.size());
-        texture->setFormat(QOpenGLTexture::RGBA16F);
+        texture->setFormat(textureFormat);
         texture->setSize(m_image.width(), m_image.height());
-        texture->allocateStorage(QOpenGLTexture::RGBA, QOpenGLTexture::Float16);
+        texture->allocateStorage(pixelFormat, pixelType);
         texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         texture->setMagnificationFilter(QOpenGLTexture::Linear);
-        texture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float16, &m_hdrImage.data()[0][0]);
+        texture->setData(pixelFormat, pixelType, m_image.constBits());
         texture->generateMipMaps();
         m_tiles << texture;
 
