@@ -242,14 +242,8 @@ void GLWidget::loadImage(const QString &fname)
 
         m_image.save("bla.png");
 
-#if 0
-        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA8_UNorm;
-        const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::BGRA;
-        const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
-#endif
-
 #if USE_OPENGLES
-        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA8_UNorm;
+        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBAFormat;
         const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
         const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
 #else
@@ -257,7 +251,6 @@ void GLWidget::loadImage(const QString &fname)
         const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
         const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::Float16;
 #endif
-
 
         QOpenGLTexture *texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
         qDebug() << "start format" << ppVar(m_hdrImage.size());
@@ -267,7 +260,8 @@ void GLWidget::loadImage(const QString &fname)
         texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         texture->setMagnificationFilter(QOpenGLTexture::Linear);
 #if USE_OPENGLES
-        texture->setData(pixelFormat, pixelType, m_image.constBits());
+        const QImage rgbaImage = m_image.convertToFormat(QImage::Format_RGBA8888);
+        texture->setData(pixelFormat, pixelType, rgbaImage.constBits());
 #else
         texture->setData(pixelFormat, pixelType, &m_hdrImage.data()[0][0]);
 #endif
