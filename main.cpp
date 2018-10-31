@@ -5,12 +5,14 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QFile>
+#include <config-opengles.h>
+
 
 int main(int argc, char *argv[])
 {
     //qputenv("QT_OPENGL", "angle");
 
-#if 0
+#if !USE_OPENGLES
     QSurfaceFormat fmt;
     fmt.setRenderableType(QSurfaceFormat::OpenGL);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
@@ -25,9 +27,12 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
+#if !USE_OPENGLES
     // OpenGLES isn't possible, and on Windows with Intel we have to use ES, because Angle
-    //QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL, true);
+    QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL, true);
+#else
     QCoreApplication::setAttribute(Qt::AA_UseOpenGLES, true);
+#endif
 
 
     QString fname = "./Desk.exr";

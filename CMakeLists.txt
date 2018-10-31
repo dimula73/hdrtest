@@ -9,6 +9,12 @@ LIST (APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 set(MIN_QT_VERSION 5.11.0)
 set(CMAKE_AUTOMOC ON)
 
+option(USE_OPENGLES "Use OpenGL ES instead of the desktop OpenGL" ON)
+configure_file(config-opengles.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-opengles.h)
+
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}
+                           ${CMAKE_CURRENT_BINARY_DIR})
+
 find_package(Qt5 ${MIN_QT_VERSION}
         REQUIRED COMPONENTS
         Core

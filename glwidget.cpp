@@ -11,6 +11,7 @@
 #include <QRectF>
 
 #include "kis_debug.h"
+#include <config-opengles.h>
 
 inline void rectToVertices(QVector3D* vertices, const QRectF &rc)
 {
@@ -32,47 +33,18 @@ inline void rectToTexCoords(QVector2D* texCoords, const QRectF &rc)
     texCoords[5] = QVector2D(rc.right(), rc.bottom());
 }
 
-
-const QString texture_frag =
-        "#version 300\n"
-        "// vertices datas\n"
-        "in vec4 textureCoordinates;\n"
-        "// uniforms\n"
-        "uniform sampler2D f_tileTexture; // tile texture\n"
-        "uniform float f_opacity = 1; // tile opacity\n"
-        "out vec4 f_fragColor; // shader output color\n"
-        "void main()\n"
-        "{\n"
-        "    // get the fragment color from the tile texture\n"
-        "    vec4 color = texture(f_tileTexture, textureCoordinates.st);\n"
-        "    // premultiplied output color\n"
-        "    f_fragColor = vec4(color * f_opacity);\n"
-        "    //f_fragColor = vec4(1.0, 0, 0, 1.0);\n"
-        "}\n";
-
-
-const QString texture_vert =
-        "#version 300\n"
-        "uniform mat4 viewProjectionMatrix;\n"
-        "uniform mat4 textureMatrix;\n"
-        "in vec3 vertexPosition;\n"
-        "in vec2 texturePosition;\n"
-        "out vec4 textureCoordinates;\n"
-        "void main()\n"
-        "{\n"
-        "   textureCoordinates = textureMatrix * vec4(texturePosition.x, texturePosition.y, 0, 1);\n"
-        "   gl_Position = viewProjectionMatrix * vec4(vertexPosition.x, vertexPosition.y, 0, 1);\n"
-        "}\n";
-
-
 GLWidget::GLWidget(const QString &fname, QWidget *parent)
     : QOpenGLWidget(parent)
     , m_defaultFile(fname)
 {
     setAttribute(Qt::WA_NoSystemBackground, true);
     setAttribute(Qt::WA_DontCreateNativeAncestors, true);
-    //setTextureFormat(GL_RGBA16F);
+
+#if !USE_OPENGLES
+    setTextureFormat(GL_RGBA16F);
+#else
     //setTextureFormat(GL_RGBA8); // doesn't work for OpenGL ES!!!
+#endif
     setAutoFillBackground(false);
 }
 
@@ -276,12 +248,11 @@ void GLWidget::loadImage(const QString &fname)
         const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
 #endif
 
+#if USE_OPENGLES
         const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA8_UNorm;
         const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
         const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
-
-
-#if 0
+#else
         const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA16F;
         const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
         const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::Float16;
@@ -295,7 +266,11 @@ void GLWidget::loadImage(const QString &fname)
         texture->allocateStorage(pixelFormat, pixelType);
         texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         texture->setMagnificationFilter(QOpenGLTexture::Linear);
+#if USE_OPENGLES
         texture->setData(pixelFormat, pixelType, m_image.constBits());
+#else
+        texture->setData(pixelFormat, pixelType, &m_hdrImage.data()[0][0]);
+#endif
         texture->generateMipMaps();
         m_tiles << texture;
 
