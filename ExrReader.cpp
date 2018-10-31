@@ -146,6 +146,18 @@ QRgb RgbaToQrgba(struct Imf::Rgba imagePixel)
                  (unsigned char)(Imath::clamp(a * 84.66f, 0.f, 255.f)));
 }
 
+QRgb RgbaF16ToLinearRgbaU8(struct Imf::Rgba imagePixel)
+{
+    auto conv = [](float value) {
+        return quint8(qBound(0.0f, 255.0f * value, 255.0f));
+    };
+
+    return qRgba(conv(imagePixel.r),
+                 conv(imagePixel.g),
+                 conv(imagePixel.b),
+                 conv(imagePixel.a));
+}
+
 bool ExrReader::read(QImage *outImage, HdrImageF16 *hdrImage)
 {
     try {
@@ -182,7 +194,7 @@ bool ExrReader::read(QImage *outImage, HdrImageF16 *hdrImage)
                 struct Imf::Rgba pxl = pixels[y][x];
 
                 // copy pixels(x,y) into image(x,y)
-                image.setPixel(x, y, RgbaToQrgba(pxl));
+                image.setPixel(x, y, RgbaF16ToLinearRgbaU8(pxl));
 
                 // And in our raw half array
                 m_pixels[idx] = pxl.r;
