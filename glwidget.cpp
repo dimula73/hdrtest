@@ -40,12 +40,17 @@ GLWidget::GLWidget(const QString &fname, QWidget *parent)
     setAttribute(Qt::WA_NoSystemBackground, true);
     setAttribute(Qt::WA_DontCreateNativeAncestors, true);
 
+    qDebug() << "*** Creating gl widget";
+
 #if !USE_OPENGLES
     setTextureFormat(GL_RGBA16F);
 #else
+    setTextureFormat(GL_RGBA16F);
     //setTextureFormat(GL_RGBA8); // doesn't work for OpenGL ES!!!
 #endif
     setAutoFillBackground(false);
+
+    //setUpdateBehavior(QOpenGLWidget::NoPartialUpdate);
 }
 
 GLWidget::~GLWidget()
@@ -62,6 +67,12 @@ void GLWidget::resizeGL(int width, int height)
     QOpenGLWidget::resizeGL(width, height);
 }
 
+#include "EGL/egl.h"
+#include "EGL/eglext.h"
+
+
+typedef const char *(EGLAPIENTRYP PFNEGLQUERYSTRINGPROC) (EGLDisplay dpy, EGLint name);
+
 void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -73,6 +84,47 @@ void GLWidget::initializeGL()
     QOpenGLFunctions *funcs = context->functions();
     QString rendererString = QString(reinterpret_cast<const char *>(funcs->glGetString(GL_RENDERER)));
     QString driverVersionString = QString(reinterpret_cast<const char *>(funcs->glGetString(GL_VERSION)));
+
+    {
+        PFNEGLQUERYSTRINGPROC queryString = nullptr;
+        queryString = reinterpret_cast<PFNEGLQUERYSTRINGPROC>(
+            context->getProcAddress("eglQueryString"));
+
+        const char* client_extensions = queryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+        const QList<QByteArray> extensions = QByteArray(client_extensions).split(' ');
+
+        qDebug () << "Available EGL extensions";
+        Q_FOREACH(const QString &ext, extensions) {
+            qDebug() << ppVar(ext);
+        }
+
+        qDebug() << "Available OpenGL ES extensions";
+        Q_FOREACH(const QString &ext, context->extensions()) {
+            qDebug() << ppVar(ext);
+        }
+
+        if (extensions.contains("EGL_ANGLE_platform_angle_d3d")) {
+            PFNEGLQUERYDISPLAYATTRIBEXTPROC queryDisplayAttribEXT = nullptr;
+
+            {
+                queryDisplayAttribEXT = reinterpret_cast<PFNEGLQUERYDISPLAYATTRIBEXTPROC>(
+                            context->getProcAddress("eglQueryDisplayAttribEXT"));
+
+                ENTER_FUNCTION() << ppVar(queryDisplayAttribEXT);
+            }
+
+            PFNEGLQUERYDEVICEATTRIBEXTPROC queryDeviceAttribEXT = nullptr;
+
+            {
+                queryDeviceAttribEXT = reinterpret_cast<PFNEGLQUERYDEVICEATTRIBEXTPROC>(
+                            context->getProcAddress("eglQueryDeviceAttribEXT"));
+
+                ENTER_FUNCTION() << ppVar(queryDeviceAttribEXT);
+            }
+        }
+    }
+
+
 
     qDebug() << ppVar(rendererString);
     qDebug() << ppVar(driverVersionString);
@@ -242,15 +294,19 @@ void GLWidget::loadImage(const QString &fname)
 
         m_image.save("bla.png");
 
-#if USE_OPENGLES
-        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBAFormat;
-        const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
-        const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
-#else
-        const QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA16F;
-        const QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
-        const QOpenGLTexture::PixelType pixelType = QOpenGLTexture::Float16;
-#endif
+        const bool useHalfFloatTexture = this->format().redBufferSize() > 8;
+
+        ENTER_FUNCTION() << ppVar(useHalfFloatTexture);
+
+        QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBAFormat;
+        QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
+        QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
+
+        if (useHalfFloatTexture) {
+            textureFormat = QOpenGLTexture::RGBA16F;
+            pixelFormat = QOpenGLTexture::RGBA;
+            pixelType = QOpenGLTexture::Float16;
+        }
 
         QOpenGLTexture *texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
         qDebug() << "start format" << ppVar(m_hdrImage.size());
@@ -259,13 +315,17 @@ void GLWidget::loadImage(const QString &fname)
         texture->allocateStorage(pixelFormat, pixelType);
         texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         texture->setMagnificationFilter(QOpenGLTexture::Linear);
-#if USE_OPENGLES
-        const QImage rgbaImage = m_image.convertToFormat(QImage::Format_RGBA8888);
-        texture->setData(pixelFormat, pixelType, rgbaImage.constBits());
-#else
-        texture->setData(pixelFormat, pixelType, &m_hdrImage.data()[0][0]);
-#endif
-        texture->generateMipMaps();
+
+        // we expect the mipmaps to be generated automatically!
+        assert(texture->isAutoMipMapGenerationEnabled());
+
+        if (!useHalfFloatTexture) {
+            const QImage rgbaImage = m_image.convertToFormat(QImage::Format_RGBA8888);
+            texture->setData(pixelFormat, pixelType, rgbaImage.constBits());
+        } else {
+            texture->setData(pixelFormat, pixelType, &m_hdrImage.data()[0][0]);
+        }
+
         m_tiles << texture;
 
         m_width = m_image.width();

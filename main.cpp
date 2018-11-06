@@ -23,6 +23,17 @@ int main(int argc, char *argv[])
     fmt.setBlueBufferSize(16);
     fmt.setAlphaBufferSize(16);
     QSurfaceFormat::setDefaultFormat(fmt);
+#else
+    QSurfaceFormat fmt;
+    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    fmt.setOption(QSurfaceFormat::DebugContext);
+    fmt.setVersion(3, 0);
+    fmt.setRedBufferSize(16);
+    fmt.setGreenBufferSize(16);
+    fmt.setBlueBufferSize(16);
+    fmt.setAlphaBufferSize(16);
+    QSurfaceFormat::setDefaultFormat(fmt);
 #endif
 
     QApplication app(argc, argv);

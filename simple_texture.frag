@@ -23,5 +23,5 @@ void main()
 
     // premultiplied output color
     OUT_VAR = vec4(color * f_opacity);
-    //OUT_VAR = vec4(1.0, 0.0, 0.5, 1.0);
+    //OUT_VAR = vec4(18.0, 8.0, 15.5, 1.0);
 }
