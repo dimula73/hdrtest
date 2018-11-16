@@ -298,7 +298,8 @@ void GLWidget::loadImage(const QString &fname)
 
         ENTER_FUNCTION() << ppVar(useHalfFloatTexture);
 
-        QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBAFormat;
+        //QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::SRGB8_Alpha8;
+        QOpenGLTexture::TextureFormat textureFormat = QOpenGLTexture::RGBA8_UNorm;
         QOpenGLTexture::PixelFormat pixelFormat = QOpenGLTexture::RGBA;
         QOpenGLTexture::PixelType pixelType = QOpenGLTexture::UInt8;
 

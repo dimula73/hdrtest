@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
     fmt.setGreenBufferSize(16);
     fmt.setBlueBufferSize(16);
     fmt.setAlphaBufferSize(16);
+    fmt.setColorSpace(QSurfaceFormat::scRGBColorSpace);
     QSurfaceFormat::setDefaultFormat(fmt);
 #endif
 
