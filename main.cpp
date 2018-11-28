@@ -29,11 +29,11 @@ int main(int argc, char *argv[])
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     fmt.setOption(QSurfaceFormat::DebugContext);
     fmt.setVersion(3, 0);
-    fmt.setRedBufferSize(16);
-    fmt.setGreenBufferSize(16);
-    fmt.setBlueBufferSize(16);
-    fmt.setAlphaBufferSize(16);
-    fmt.setColorSpace(QSurfaceFormat::scRGBColorSpace);
+    fmt.setRedBufferSize(10);
+    fmt.setGreenBufferSize(10);
+    fmt.setBlueBufferSize(10);
+    fmt.setAlphaBufferSize(10);
+    fmt.setColorSpace(QSurfaceFormat::bt2020PQColorSpace);
     QSurfaceFormat::setDefaultFormat(fmt);
 #endif
 

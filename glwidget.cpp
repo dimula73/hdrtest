@@ -46,6 +46,7 @@ GLWidget::GLWidget(const QString &fname, QWidget *parent)
     setTextureFormat(GL_RGBA16F);
 #else
     setTextureFormat(GL_RGBA16F);
+    setTextureColorSpace(QSurfaceFormat::scRGBColorSpace);
     //setTextureFormat(GL_RGBA8); // doesn't work for OpenGL ES!!!
 #endif
     setAutoFillBackground(false);
