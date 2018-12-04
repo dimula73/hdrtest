@@ -39,6 +39,7 @@ set(hdrtest_SRCS
     ExrReader.cpp
     HdrImageF16.cpp
     kis_debug.cpp
+    KisScreenInformationAdapter.cpp
 )
 
 set(hdr_QRCS

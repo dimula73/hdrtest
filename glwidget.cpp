@@ -13,6 +13,9 @@
 #include "kis_debug.h"
 #include <config-opengles.h>
 
+#include "KisScreenInformationAdapter.h"
+#include <QWindow>
+
 inline void rectToVertices(QVector3D* vertices, const QRectF &rc)
 {
     vertices[0] = QVector3D(rc.left(),  rc.bottom(), 0.f);
@@ -50,6 +53,7 @@ GLWidget::GLWidget(const QString &fname, QWidget *parent)
     //setTextureFormat(GL_RGBA8); // doesn't work for OpenGL ES!!!
 #endif
     setAutoFillBackground(false);
+    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
     //setUpdateBehavior(QOpenGLWidget::NoPartialUpdate);
 }
@@ -60,7 +64,7 @@ GLWidget::~GLWidget()
 }
 
 QSize GLWidget::sizeHint() const {
-    return QSize(m_width, m_height);
+    return QSize(qMax(1,m_width), qMax(1, m_height));
 }
 
 void GLWidget::resizeGL(int width, int height)
@@ -70,7 +74,6 @@ void GLWidget::resizeGL(int width, int height)
 
 #include "EGL/egl.h"
 #include "EGL/eglext.h"
-
 
 typedef const char *(EGLAPIENTRYP PFNEGLQUERYSTRINGPROC) (EGLDisplay dpy, EGLint name);
 
@@ -104,31 +107,15 @@ void GLWidget::initializeGL()
             qDebug() << ppVar(ext);
         }
 
-        if (extensions.contains("EGL_ANGLE_platform_angle_d3d")) {
-            PFNEGLQUERYDISPLAYATTRIBEXTPROC queryDisplayAttribEXT = nullptr;
-
-            {
-                queryDisplayAttribEXT = reinterpret_cast<PFNEGLQUERYDISPLAYATTRIBEXTPROC>(
-                            context->getProcAddress("eglQueryDisplayAttribEXT"));
-
-                ENTER_FUNCTION() << ppVar(queryDisplayAttribEXT);
-            }
-
-            PFNEGLQUERYDEVICEATTRIBEXTPROC queryDeviceAttribEXT = nullptr;
-
-            {
-                queryDeviceAttribEXT = reinterpret_cast<PFNEGLQUERYDEVICEATTRIBEXTPROC>(
-                            context->getProcAddress("eglQueryDeviceAttribEXT"));
-
-                ENTER_FUNCTION() << ppVar(queryDeviceAttribEXT);
-            }
-        }
+        QWindow *window = this->window()->windowHandle();
+        QScreen *screen = window->screen();
+        KisScreenInformationAdapter adapter(context);
+        qDebug() << adapter.infoForScreen(screen);
     }
-
-
 
     qDebug() << ppVar(rendererString);
     qDebug() << ppVar(driverVersionString);
+
 
     m_vao.create();
     m_vao.bind();
@@ -332,8 +319,7 @@ void GLWidget::loadImage(const QString &fname)
 
         m_width = m_image.width();
         m_height = m_image.height();
-        setFixedSize(m_image.size());
-
+        updateGeometry();
     }
 
     update();

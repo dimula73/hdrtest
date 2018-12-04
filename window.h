@@ -17,6 +17,7 @@ public:
 public Q_SLOTS:
 
     void fileOpen();
+    void slotDoSomething();
 
 private:
     GLWidget *m_glWidget {0};
