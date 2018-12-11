@@ -30,10 +30,15 @@ ENDIF(WIN32)
 FIND_PACKAGE(OpenEXR REQUIRED)
 INCLUDE_DIRECTORIES(${OPENEXR_INCLUDE_DIR} "${OPENEXR_INCLUDE_DIR}/OpenEXR")
 
+find_package(Boost 1.55 REQUIRED COMPONENTS system)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
 SET(LIBS ${LIBS} ${OPENEXR_LIBRARIES})
 
 set(hdrtest_SRCS 
     glwidget.cpp 
+    KisGLImageWidget.cpp
+    KisGLImageF16.cpp
     main.cpp
     window.cpp
     ExrReader.cpp
@@ -44,7 +49,8 @@ set(hdrtest_SRCS
 
 set(hdr_QRCS
     ${CMAKE_SOURCE_DIR}/shaders.qrc
-     CACHE INTERNAL "hdr_QRCS"
+    ${CMAKE_SOURCE_DIR}/kis_gl_image_widget.qrc
+    CACHE INTERNAL "hdr_QRCS"
 )
 qt5_add_resources(hdrtest_SRCS ${hdr_QRCS})
 

@@ -1,6 +1,8 @@
 #include "window.h"
 
 #include "glwidget.h"
+#include "KisGLImageWidget.h"
+#include "KisGLImageF16.h"
 
 #include <QMenu>
 #include <QMenuBar>
@@ -47,6 +49,12 @@ Window::Window(const QString &fname)
     label->setPixmap(QPixmap::fromImage(icon));
     hLayout->addWidget(label, 0, Qt::AlignLeft);
 
+    m_imageWidget = new KisGLImageWidget(this);
+    m_imageWidget->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    hLayout->addWidget(m_imageWidget, 0, Qt::AlignLeft);
+
+    initializePalette();
+
     QPushButton *button = new QPushButton("Quit", centralWidget);
     connect(button, SIGNAL(clicked()), this, SLOT(slotDoSomething()));
     hLayout->addWidget(button, 0, Qt::AlignCenter);
@@ -71,4 +79,36 @@ void Window::fileOpen()
 void Window::slotDoSomething()
 {
     close();
+}
+
+void Window::initializePalette()
+{
+    const int size = 128;
+    KisGLImageF16 image(size, size);
+    image.clearPixels();
+    half *pixelPtr = image.data();
+
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            Imf::Rgba &pxl = reinterpret_cast<Imf::Rgba &>(*pixelPtr);
+
+            pxl.r = 2.0 * qreal(x) / size;
+
+            if (y > size / 2) {
+                const qreal portion = (qreal(y) / size - 0.5) * 2.0;
+
+                pxl.g = qMin(1.0, 0.2 + 1.8 * portion);
+                pxl.b = qMin(1.0, 0.2 + 1.8 * portion);
+            } else {
+                pxl.g = 0.2;
+                pxl.b = 0.2;
+            }
+
+            pxl.a = 1.0;
+
+            pixelPtr += 4;
+        }
+    }
+
+    m_imageWidget->loadImage(image);
 }

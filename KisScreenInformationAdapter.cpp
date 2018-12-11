@@ -3,7 +3,8 @@
 #include "kis_debug.h"
 #include <QOpenGLContext>
 
-#include <QtGui/5.11.2/QtGui/qpa/qplatformnativeinterface.h>
+//#include <QtGui/5.11.2/QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/5.12.0/QtGui/qpa/qplatformnativeinterface.h>
 #include <QGuiApplication>
 #include <QWindow>
 #include <d3d11.h>
