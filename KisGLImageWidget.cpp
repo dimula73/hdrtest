@@ -57,8 +57,6 @@ void KisGLImageWidget::initializeGL()
     fragShaderFile.open(QIODevice::ReadOnly);
     QString fragSource = fragShaderFile.readAll();
 
-    ENTER_FUNCTION() << ppVar(context()->isOpenGLES());
-
     if (context()->isOpenGLES()) {
         const char *versionHelper = "#define USE_OPENGLES\n";
         vertSource.prepend(versionHelper);

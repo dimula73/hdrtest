@@ -79,6 +79,11 @@ typedef const char *(EGLAPIENTRYP PFNEGLQUERYSTRINGPROC) (EGLDisplay dpy, EGLint
 
 void GLWidget::initializeGL()
 {
+    qDebug() << "############################";
+    qDebug() << ppVar(context()->isSurfaceColorSpaceSupported(QSurfaceFormat::sRGBColorSpace));
+    qDebug() << ppVar(context()->isSurfaceColorSpaceSupported(QSurfaceFormat::scRGBColorSpace));
+    qDebug() << ppVar(context()->isSurfaceColorSpaceSupported(QSurfaceFormat::bt2020PQColorSpace));
+
     initializeOpenGLFunctions();
     connect(context(), SIGNAL(aboutToBeDestroyed()), this, SLOT(teardownGL()), Qt::DirectConnection);
     printVersionInformation();
